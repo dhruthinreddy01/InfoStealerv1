@@ -1,0 +1,14 @@
+{
+  "plugins": {
+    "clipboard": true,
+    "screenshot": true,
+    "webcam": true,
+    "system_info": true,
+    "processes": true,
+    "wifi": true,
+    "devices": true,
+    "persistence_sim": true
+  },
+  "dry_run": false,
+  "data_interval_minutes": 120
+} 

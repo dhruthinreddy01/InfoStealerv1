@@ -1,0 +1,22 @@
+InfoSnare
+Created by: Biscuit (LowHypenE) and contributors
+
+Purpose:
+For ethical simulation and cybersecurity education in controlled environments.
+
+Development & Support:
+- System data capture and formatting by Biscuit
+- Educational refactor and structure by OpenAI Assistant
+
+Libraries Used:
+- psutil: System usage statistics
+- pyperclip: Clipboard access
+- opencv-python: Webcam integration
+- pillow: Image manipulation
+- wmi: Windows Management Instrumentation
+- requests: (legacy, not used in InfoSnare)
+
+Legal & Ethical Reminder:
+Use only in lab or with full consent. This project is for learning and blue team defense simulation.
+
+Thank you for using InfoSnare!

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %} – {{ t('report') }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+      <div class="card shadow p-4 mb-4">
+        <h3 class="mb-3 text-center"><i class="fa-solid fa-shield-halved text-danger"></i> {{ t('report') }}</h3>
+        <div class="mb-4 text-center">
+          <span class="fw-bold">{{ t('risk_score') }}:</span>
+          <span class="badge bg-{{ 'danger' if risk_level=='High' else 'warning' if risk_level=='Medium' else 'success' }} fs-5">{{ risk_score }}%</span>
+          <span class="ms-2">({{ t(risk_level|lower) }})</span>
+          <div class="progress mt-2" style="height: 1.5rem;">
+            <div id="riskBar" class="progress-bar bg-{{ 'danger' if risk_level=='High' else 'warning' if risk_level=='Medium' else 'success' }}" role="progressbar" style="width: 0%; font-weight: bold; font-size: 1rem;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+          </div>
+        </div>
+        <div class="alert alert-info text-center" role="alert">{{ t('summary_msg') }}</div>
+        <ul class="list-group mb-4">
+          {% for key, label, icon in [
+            ('os', t('os'), 'fa-desktop'),
+            ('system_info', t('system_info'), 'fa-microchip'),
+            ('antivirus', t('antivirus'), 'fa-shield-halved'),
+            ('location', t('location'), 'fa-location-dot'),
+            ('clipboard', t('clipboard'), 'fa-clipboard'),
+            ('website', t('website'), 'fa-globe'),
+            ('username', t('username'), 'fa-user'),
+            ('password', t('password'), 'fa-lock'),
+            ('file_uploaded', t('file_upload'), 'fa-file')
+          ] %}
+          <li class="list-group-item d-flex align-items-center justify-content-between">
+            <span><i class="fa-solid {{ icon }} me-2"></i>{{ label }}</span>
+            <span class="d-flex align-items-center">
+              {% if data.get(key) %}
+                <span class="text-success me-2" aria-label="{{ t('filled') }}"><i class="fa-solid fa-circle-check"></i></span>
+                <span class="me-2" id="val-{{ key }}">{{ data[key] }}</span>
+                <button class="btn btn-outline-secondary btn-sm copy-btn" data-clipboard-target="#val-{{ key }}" aria-label="{{ t('copy') }}"><i class="fa-solid fa-copy"></i></button>
+              {% else %}
+                <span class="text-danger me-2" aria-label="{{ t('empty') }}"><i class="fa-solid fa-circle-exclamation"></i></span>
+                <span class="text-muted me-2">{{ t('empty') }}</span>
+              {% endif %}
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="fa-solid fa-circle-info"></i> {{ t('metadata') }}</h6>
+          <ul class="list-unstyled mb-0">
+            <li><i class="fa-solid fa-clock"></i> <span class="fw-semibold">{{ t('timestamp') }}:</span> {{ data['timestamp'] }}</li>
+            <li><i class="fa-solid fa-network-wired"></i> <span class="fw-semibold">{{ t('ip_address') }}:</span> {{ data['ip'] }}</li>
+            <li><i class="fa-solid fa-browser"></i> <span class="fw-semibold">{{ t('browser') }}:</span> {{ data['browser'] }}</li>
+            <li><i class="fa-solid fa-hashtag"></i> <span class="fw-semibold">{{ t('session_id') }}:</span> {{ data['session_id'] }}</li>
+          </ul>
+        </div>
+        <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+          <a href="{{ url_for('download', filename=filename) }}" class="btn btn-success"><i class="fa-solid fa-download"></i> {{ t('download_json') }}</a>
+          <a href="{{ url_for('download_pdf', filename=filename) }}" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> {{ t('download_pdf') }}</a>
+          <button class="btn btn-outline-secondary" id="scrollToReport"><i class="fa-solid fa-arrow-down"></i> {{ t('scroll_to_report') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
+<script>
+// Animate risk score bar
+const riskBar = document.getElementById('riskBar');
+const riskScore = {{ risk_score|int }};
+let current = 0;
+const interval = setInterval(() => {
+  if (current >= riskScore) {
+    clearInterval(interval);
+    riskBar.innerText = riskScore + '%';
+    riskBar.setAttribute('aria-valuenow', riskScore);
+    return;
+  }
+  current++;
+  riskBar.style.width = current + '%';
+  riskBar.innerText = current + '%';
+  riskBar.setAttribute('aria-valuenow', current);
+}, 12);
+// Copy-to-clipboard
+new ClipboardJS('.copy-btn');
+// Toast for copy
+const copyBtns = document.querySelectorAll('.copy-btn');
+copyBtns.forEach(btn => {
+  btn.addEventListener('click', function() {
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-bg-success border-0 show position-fixed bottom-0 end-0 m-3';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.innerHTML = `<div class='d-flex'><div class='toast-body'>{{ t('copied') }}</div><button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button></div>`;
+    document.body.appendChild(toast);
+    new bootstrap.Toast(toast, { delay: 1500 }).show();
+    setTimeout(() => toast.remove(), 1700);
+  });
+});
+// Scroll to report
+const scrollBtn = document.getElementById('scrollToReport');
+if (scrollBtn) {
+  scrollBtn.addEventListener('click', function() {
+    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+  });
+}
+</script>
+{% endblock %} 
